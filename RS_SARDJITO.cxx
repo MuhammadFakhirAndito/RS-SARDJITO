@@ -250,6 +250,304 @@ NodeBST* cariBST(NodeBST* node, int id){
 	return cariBST(node->kanan, id);
 }
 
+// =====================
+// HAPUS PASIEN AKTIF
+// =====================
+void hapusPasienAktif(int id){
+	if(head == NULL) return;
+
+	if(head->data.id == id){
+		NodePasien* temp = head;
+		head = head->next;
+		delete temp;
+		return;
+	}
+
+	NodePasien* bantu = head;
+
+	while(bantu->next != NULL){
+		if(bantu->next->data.id == id){
+			NodePasien* temp = bantu->next;
+			bantu->next = temp->next;
+			delete temp;
+			return;
+		}
+		bantu = bantu->next;
+	}
+}
+
+
+// =====================
+// HAPUS BST
+// =====================
+NodeBST* cariMin(NodeBST* node){
+	while(node->kiri != NULL){
+		node = node->kiri;
+	}
+	return node;
+}
+
+NodeBST* hapusBST(NodeBST* node, int id){
+	if(node == NULL) return NULL;
+
+	if(id < node->id){
+		node->kiri = hapusBST(node->kiri, id);
+	}
+	else if(id > node->id){
+		node->kanan = hapusBST(node->kanan, id);
+	}
+	else{
+		if(node->kiri == NULL){
+			NodeBST* temp = node->kanan;
+			delete node;
+			return temp;
+		}
+		else if(node->kanan == NULL){
+			NodeBST* temp = node->kiri;
+			delete node;
+			return temp;
+		}
+
+		NodeBST* temp = cariMin(node->kanan);
+
+		node->id = temp->id;
+		node->pasien = temp->pasien;
+		node->kanan = hapusBST(node->kanan, temp->id);
+	}
+
+	return node;
+}
+
+
+// =====================
+// SIMPAN FILE
+// =====================
+void simpanArsip(Pasien p){
+	FILE* file = fopen("arsip_pasien.txt", "a");
+
+	if(file == NULL){
+		cout << "Gagal membuka file.\n";
+		return;
+	}
+
+	fprintf(file, "%d|%s|%s|%s\n",
+		p.id,
+		p.nama,
+		p.keluhan,
+		p.status);
+
+	fclose(file);
+}
+
+
+// =====================
+// CARI DI FILE
+// =====================
+void cariDiFile(int id){
+	FILE* file = fopen("arsip_pasien.txt", "r");
+
+	if(file == NULL){
+		cout << "Data arsip belum ada.\n";
+		return;
+	}
+
+	int fid;
+	char nama[100];
+	char keluhan[200];
+	char status[50];
+
+	while(fscanf(file, "%d|%99[^|]|%199[^|]|%49[^\n]\n",
+		&fid,
+		nama,
+		keluhan,
+		status) == 4){
+
+		if(fid == id){
+			cout << "\nData ditemukan di arsip\n";
+			cout << "ID      : " << fid << endl;
+			cout << "Nama    : " << nama << endl;
+			cout << "Keluhan : " << keluhan << endl;
+			cout << "Status  : " << status << endl;
+
+			fclose(file);
+			return;
+		}
+	}
+
+	fclose(file);
+	cout << "Pasien tidak ditemukan.\n";
+}
+
+
+// =====================
+// SORTING NAMA
+// =====================
+void sortingNama(){
+	if(head == NULL || head->next == NULL){
+		return;
+	}
+
+	NodePasien* i;
+	NodePasien* j;
+
+	for(i = head; i != NULL; i = i->next){
+		for(j = i->next; j != NULL; j = j->next){
+			if(banding(i->data.nama, j->data.nama) > 0){
+				Pasien temp = i->data;
+				i->data = j->data;
+				j->data = temp;
+			}
+		}
+	}
+}
+
+
+// =====================
+// DAFTAR PASIEN
+// =====================
+void daftarPasien(){
+	char nama[100];
+	char keluhan[200];
+
+	cin.ignore();
+
+	cout << "Masukkan nama pasien    : ";
+	cin.getline(nama, 100);
+
+	cout << "Masukkan keluhan pasien : ";
+	cin.getline(keluhan, 200);
+
+	Pasien p = buatPasien(nama, keluhan);
+
+	enqueue(p.id);
+
+	char log[200];
+	sprintf(log, "Pasien ID %d mendaftar", p.id);
+	pushRiwayat(log);
+
+	FILE* file = fopen("pendaftaran.txt", "a");
+
+	if(file != NULL){
+		fprintf(file, "%d|%s|%s|%s\n",
+			p.id,
+			p.nama,
+			p.keluhan,
+			p.status);
+		fclose(file);
+	}
+
+	cout << "\nPendaftaran berhasil.\n";
+	cout << "ID pasien    : " << p.id << endl;
+	cout << "Nomor antrian: " << jumlahQueue << endl;
+}
+
+
+// =====================
+// PANGGIL PASIEN
+// =====================
+void panggilPasien(){
+	int id = dequeue();
+
+	if(id == -1){
+		cout << "Tidak ada antrian.\n";
+		return;
+	}
+
+	FILE* file = fopen("pendaftaran.txt", "r");
+
+	if(file == NULL){
+		cout << "Data pendaftaran tidak ada.\n";
+		return;
+	}
+
+	int fid;
+	char nama[100];
+	char keluhan[200];
+	char status[50];
+
+	while(fscanf(file, "%d|%99[^|]|%199[^|]|%49[^\n]\n",
+		&fid,
+		nama,
+		keluhan,
+		status) == 4){
+
+		if(fid == id){
+			Pasien p;
+			p.id = fid;
+			salin(p.nama, nama);
+			salin(p.keluhan, keluhan);
+			salin(p.status, "Diproses");
+
+			NodePasien* node = tambahPasienAktif(p);
+			root = insertBST(root, node);
+
+			char log[200];
+			sprintf(log, "Pasien ID %d dipanggil", p.id);
+			pushRiwayat(log);
+
+			cout << "Pasien " << p.nama << " dipanggil.\n";
+
+			fclose(file);
+			return;
+		}
+	}
+
+	fclose(file);
+}
+
+
+// =====================
+// SELESAI PEMERIKSAAN
+// =====================
+void selesaiPemeriksaan(){
+	int id;
+	cout << "Masukkan ID pasien: ";
+	cin >> id;
+
+	NodeBST* hasil = cariBST(root, id);
+
+	if(hasil == NULL){
+		cout << "Pasien aktif tidak ditemukan.\n";
+		return;
+	}
+
+	salin(hasil->pasien->data.status, "Selesai");
+
+	simpanArsip(hasil->pasien->data);
+
+	char log[200];
+	sprintf(log, "Pasien ID %d selesai diperiksa", id);
+	pushRiwayat(log);
+
+	root = hapusBST(root, id);
+	hapusPasienAktif(id);
+
+	cout << "Pemeriksaan selesai.\n";
+}
+
+
+// =====================
+// CARI PASIEN
+// =====================
+void cariPasien(){
+	int id;
+	cout << "Masukkan ID pasien: ";
+	cin >> id;
+
+	NodeBST* hasil = cariBST(root, id);
+
+	if(hasil != NULL){
+		cout << "\nData ditemukan di pasien aktif\n";
+		cout << "ID      : " << hasil->pasien->data.id << endl;
+		cout << "Nama    : " << hasil->pasien->data.nama << endl;
+		cout << "Keluhan : " << hasil->pasien->data.keluhan << endl;
+		cout << "Status  : " << hasil->pasien->data.status << endl;
+		return;
+	}
+
+	cariDiFile(id);
+}
+
 void menuMedic(){
 	int pilihKaryawan;
 
@@ -276,19 +574,19 @@ void menuMedic(){
 			tampilAntrian();
 		}
 		else if(pilihKaryawan == 3){
-		
+			panggilPasien();
 		}
 		else if(pilihKaryawan == 4){
-			
+			selesaiPemeriksaan();
 		}
 		else if(pilihKaryawan == 5){
 			tampilRiwayat();
 		}
 		else if(pilihKaryawan == 6){
-			
+			cariPasien();
 		}
 		else if(pilihKaryawan == 7){
-			
+			sortingNama();
 			cout << "Data pasien aktif berhasil diurutkan.\n";
 		}
 		else if(pilihKaryawan == 8){
@@ -316,13 +614,13 @@ void menuPasien(){
 		cin >> pilihPelanggan;
 
 		if(pilihPelanggan == 1){
-			
+			daftarPasien();
 		}
 		else if(pilihPelanggan == 2){
 			tampilAntrian();
 		}
 		else if(pilihPelanggan == 3){
-			
+			cariPasien();
 		}
 		else if(pilihPelanggan == 4){
 			cout << "\nTerima kasih telah menggunakan layanan kami. Semoga lekas sehat!\n";
@@ -380,3 +678,4 @@ int main(){
 
 	return 0;
 }
+
