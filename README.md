@@ -35,12 +35,3 @@ Aplikasi ini mengombinasikan beberapa struktur data untuk mengelola informasi pa
 * [ ] **Cari Data Pasien** ── 🛠️ *BELUM DIIMPLEMENTASI*
 
 ---
-
-## 🚀 Panduan Pengembang (Untuk Anggota Kelompok)
-
-Untuk Mas Zhafif yang akan melanjutkan codingan ini, silakan ikuti alur ini:
-
-1. Lakukan `git pull origin main` terlebih dahulu untuk mengambil kode terbaru.
-2. Fokus utama kita adalah melengkapi fungsi-fungsi kosong yang ada di dalam `menuMedic()` dan `menuPasien()`.
-3. Manfaatkan fungsi pembantu (*helper*) yang sudah dibuat seperti `buatPasien()`, `enqueue()`, `dequeue()`, `insertBST()`, dan `cariBST()`.
-4. Pastikan melakukan uji coba compile setelah menambahkan fungsi baru sebelum melakukan *commit* dan *push* kembali ke GitHub.
